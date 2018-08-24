@@ -11,6 +11,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+
 class LoadingPage(QWidget):
     def __init__(self, parent):
         QWidget.__init__(self)
@@ -243,11 +245,47 @@ class MetricComparisonPage(QWidget):
         self.proxy.setFilterRegExp(search)
 
 class MetricDivePage(QWidget):
+
+    request_run_metric_dive_signal = pyqtSignal(str)
+
     def __init__(self, parent):
         QWidget.__init__(self)
         self.parent = parent
-        self.canvas = Canvas(self, width=8, height=4) 
+        
+        # connect thread signals
+        self.request_run_metric_dive_signal.connect(self.parent.dataWorker.run_metric_dive)
+        self.parent.dataWorker.run_metric_dive_signal.connect(self.display_metric_dive)
+        
+        # Create layout
+        self.gridLayout = QGridLayout(self)
+        
+        # Create Combo Box with column names
+        self.xColBox = ColumnComboBox(self, self.parent)
+        self.xColBox.setFont(QFont("Raleway", 16))
+        self.xColBox.currentTextChanged.connect(self.request_run_metric_dive)
+        
+        # Create Tabs
+        self.tabs = QTabWidget(self)
+        self.scatterTab = QWidget()
+        self.histTab = QWidget()
+            
+        self.tabs.addTab(self.scatterTab,"Scatter")
+        self.tabs.addTab(self.histTab,"Histogram")
+        self.build_scatter_tab()
+        
+        # Add widgets to layout
+        self.gridLayout.addWidget(self.xColBox, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.tabs, 1, 0, 1, 1)
     
-    def run_scatter(self):
-        self.canvas.scatter(self.parent.df, x="price_1_chg", y="price_2_chg", size="price")
+    def build_scatter_tab(self):
+        self.canvas = Canvas(self.scatterTab, width=8, height=4) 
+        self.toolbar = NavigationToolbar(self.canvas, self.scatterTab)
+    
+    def request_run_metric_dive(self, col):
+        if col != '' and self.parent.is_df_loaded:
+            self.request_run_metric_dive_signal.emit(col)
+        
+    @pyqtSlot(pd.DataFrame, dict)
+    def display_metric_dive(self, df, cols):
+        self.canvas.scatter(df, x=cols["x"], y=cols["y"], size=cols["size"])
    

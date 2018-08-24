@@ -7,6 +7,7 @@ import PyQt5.QtGui
 from PyQt5.QtCore import QSize 
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
 
@@ -40,6 +41,8 @@ class Canvas(FigureCanvas):
     def scatter(self, df, x, y, color=None, size=None, alpha=0.5):
         x = np.array(df[x])
         y = np.array(df[y])
+        print(x[1:10])
+        print(y[1:10])
         sizecol = size if size is not None else x
         sizes = np.array(pd.to_numeric(df[sizecol], errors="coerce"))
         ax = self.figure.add_subplot(111)

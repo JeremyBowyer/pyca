@@ -30,10 +30,13 @@ class DataWorker(Worker):
     run_analysis_output_signal = pyqtSignal(object)
     loading_msg_signal = pyqtSignal(str)
     
+    run_metric_dive_signal = pyqtSignal(pd.DataFrame, dict)
+    
     def __init__(self):
         super().__init__()
         self.df = None
-    
+        self.yCol = ""
+        
     @pyqtSlot(pd.DataFrame)
     def load_df(self, df):
         self.df = df
@@ -43,9 +46,14 @@ class DataWorker(Worker):
     @pyqtSlot(dict)
     def run_analysis(self, cols):
         if self.df_is_loaded():
+            # Store y column for metric dive
+            self.yCol = cols["yCol"]
+            
+            # Create column lists
             ignoreCols = [cols["yCol"]] + [cols["dateCol"]] + [cols["categoryCol"]] + cols["ignoreCols"]
             xCols = [col for col in self.df.columns if col not in ignoreCols]
             
+            # Coerce Y column to numeric
             self.df[cols["yCol"]] = pd.to_numeric(self.df[cols["yCol"]], errors="coerce")
             
             metrics = []
@@ -109,7 +117,17 @@ class DataWorker(Worker):
 
     def df_is_loaded(self):
         return(self.df is not None)
-        
+    
+    @pyqtSlot(str)
+    def run_metric_dive(self, col):
+        if self.df_is_loaded() and self.yCol != '':
+            cols = {
+                "x": col,
+                "y": self.yCol,
+                "size": "price"
+                }
+            self.run_metric_dive_signal.emit(self.df, cols)
+    
     
 class LoadCsvWorker(Worker):
     
