@@ -1,0 +1,8 @@
+/logs/
+/__pycache__/
+/.ipynb_checkpoints/
+/test_data/
+Untitled.ipynb
+run_app.bat
+run_app
+compile.bat
