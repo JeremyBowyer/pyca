@@ -29,21 +29,18 @@ class ColumnComboBox(QtWidgets.QComboBox):
         if self.controller.is_df_loaded:
             self.addItems(self.controller.df.columns)
 
-class Canvas(FigureCanvas):
+class ScatterCanvas(FigureCanvas):
     def __init__(self, parent=None, width=5, height=5, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
-        
         FigureCanvas.__init__(self, fig)
+        self.ax = self.figure.add_subplot(111)
         self.setParent(parent)
-        
+    
+    def clear(self):
+        self.ax.cla()
         
     def scatter(self, df, x, y, color=None, size=None, alpha=0.5):
-        x = np.array(df[x])
-        y = np.array(df[y])
-        print(x[1:10])
-        print(y[1:10])
+        self.clear()
         sizecol = size if size is not None else x
-        sizes = np.array(pd.to_numeric(df[sizecol], errors="coerce"))
-        ax = self.figure.add_subplot(111)
-        ax.scatter(x=x, y=x, s=sizes, alpha=alpha)
+        df.plot.scatter(x=x,y=y,s=df[sizecol].values, alpha=alpha,ax=self.ax)
+        self.draw()

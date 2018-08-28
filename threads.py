@@ -6,7 +6,7 @@ import psutil
 import csv
 
 from models import NumpyModel, PandasModel
-from ui_objects import Canvas
+from ui_objects import ScatterCanvas
 
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QApplication, QPushButton, QTextEdit, QVBoxLayout, QWidget
@@ -63,13 +63,15 @@ class DataWorker(Worker):
             pvalues = []
             counts = []
             
-            sci_times = []
-            np_times = []
-            
+            cnt = 1
+            n_cols = len(xCols)
             for metric in xCols:
-                # msg = "Calculating Stats for " + metric            #
-                # msg = (msg[:42] + '...') if len(msg) > 42 else msg # constant emissions causing GUI to hang
-                # self.loading_msg_signal.emit(msg)                  #
+                # Loading message
+                # msg = str(cnt) + " out of " + str(n_cols) + ": " + metric
+                # msg = (msg[:50] + '...') if len(msg) > 50 else msg
+                # self.loading_msg_signal.emit(msg)
+                # cnt += 1
+                
                 metric_df = pd.DataFrame({
                     "x":pd.to_numeric(self.df[metric], errors="coerce"),
                     "y":self.df[cols["yCol"]]
@@ -126,7 +128,14 @@ class DataWorker(Worker):
                 "y": self.yCol,
                 "size": "price"
                 }
-            self.run_metric_dive_signal.emit(self.df, cols)
+                
+            self.metric_df = self.df[[col, self.yCol, "price"]]
+            
+            self.metric_df[col] = pd.to_numeric(self.metric_df[col], errors="coerce")
+            self.metric_df[self.yCol] = pd.to_numeric(self.metric_df[self.yCol], errors="coerce")
+            self.metric_df["price"] = pd.to_numeric(self.metric_df["price"], errors="coerce")
+            self.metric_df.dropna(inplace=True)
+            self.run_metric_dive_signal.emit(self.metric_df, cols)
     
     
 class LoadCsvWorker(Worker):
