@@ -16,7 +16,7 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import QSize 
@@ -26,14 +26,20 @@ from functools import partial
      
 class Pyca(QMainWindow):
     PAGE_MASTER = [LoadingPage, SplashPage, SetupPage, TransformationPage, DataPreviewPage, MetricComparisonPage, MetricDivePage]
+    
+    # FONTS #
     TOOLBAR_FONT = QFont("Raleway", 14)
     NORMAL_BTN_FONT = QFont("Raleway", 14)
     LARGE_BTN_FONT = QFont("Raleway", 24)
     SETUP_WIDGET_FONT = QFont("Raleway", 12)
-    
     TABLE_FONT_MEDIUM = QFont("Raleway", 12)
     TABLE_FONT_LARGE = QFont("Raleway", 16)
     
+    # COLORS #
+    BACKGROUND_PRIMARY = "#363636"
+    BACKGROUND_SECONDARY = "#434343"
+    FONT_COLOR = "#b4b4b4"
+        
     columnLists = []
     
     def __init__(self):
@@ -66,8 +72,11 @@ class Pyca(QMainWindow):
         self.raise_page(SplashPage, force=True)
     
     def build_status_bar(self):
-        self.statusBar()
-        
+        self.statusBar = QtWidgets.QStatusBar()
+        self.setStatusBar(self.statusBar)
+        self.statusProgress = QtWidgets.QProgressBar()
+        self.statusBar.addPermanentWidget(self.statusProgress)
+        self.statusProgress.setGeometry(30, 40, 200, 25)
         
     def build_menu(self):
         self.mainMenu = self.menuBar()
@@ -177,6 +186,14 @@ class Pyca(QMainWindow):
         if page:
             self.raise_page(page)
     
+    def start_status_task(self, msg):
+        self.statusBar.showMessage(msg)
+        self.statusProgress.setRange(0,0)
+        
+    def finished_status_task(self, msg=""):
+        self.statusBar.showMessage(msg)
+        self.statusProgress.setRange(0,1)
+    
     def raise_page(self, page, force=False):
         if (self.is_df_loaded and not self.is_loading) or force:
             idx = self.PAGE_MASTER.index(page)
@@ -229,7 +246,6 @@ class Pyca(QMainWindow):
         saveAction.setStatusTip("Save your data as CSV")
         saveAction.triggered.connect(self.save_csv)
         self.fileMenu.insertAction(self.quitAction, saveAction)
-
         self.finished_task(SetupPage)
     
     @pyqtSlot(list)

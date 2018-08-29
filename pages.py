@@ -278,8 +278,8 @@ class MetricDivePage(QWidget):
         self.gridLayout.addWidget(self.tabs, 1, 0, 1, 1)
     
     def build_scatter_tab(self):
-        self.canvas = ScatterCanvas(self.scatterTab, width=8, height=4) 
-        self.toolbar = NavigationToolbar(self.canvas, self.scatterTab)
+        self.canvas = ScatterCanvas(self.scatterTab, width=8, height=4, controller=self.parent)
+        #self.toolbar = NavigationToolbar(self.canvas, self.scatterTab)
     
     def request_run_metric_dive(self, col):
         if col != '' and self.parent.is_df_loaded:
@@ -289,5 +289,4 @@ class MetricDivePage(QWidget):
     @pyqtSlot(pd.DataFrame, dict)
     def display_metric_dive(self, df, cols):
         self.canvas.scatter(df, x=cols["x"], y=cols["y"], size=cols["size"])
-        print("done")
    
