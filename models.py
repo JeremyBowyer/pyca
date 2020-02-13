@@ -2,11 +2,9 @@ from PyQt5 import QtCore
 from PyQt5 import QtGui
 import pandas as pd
 import numpy as np
+from IPython import embed;
 
 class NumpyModel(QtCore.QAbstractTableModel):
-    """
-    Class to populate a table view with a pandas dataframe
-    """
     def __init__(self, data, parent=None, format_cols={}):
         QtCore.QAbstractTableModel.__init__(self, parent)
         self._data = np.array(data.values)
@@ -16,10 +14,11 @@ class NumpyModel(QtCore.QAbstractTableModel):
         self._mins = {}
         self._medians = {}
         
-        for col in self._format_cols.keys():
-            self._maxs[col] = np.nanmax(pd.to_numeric(self._data[:,col], errors="coerce"))
-            self._mins[col] = np.nanmin(pd.to_numeric(self._data[:,col], errors="coerce"))
-            self._medians[col] = np.nanmedian(np.unique(pd.to_numeric(self._data[:,col], errors="coerce")))
+        if self._data.size != 0:
+            for col in self._format_cols.keys():
+                self._maxs[col] = np.nanmax(pd.to_numeric(self._data[:,col], errors="coerce"))
+                self._mins[col] = np.nanmin(pd.to_numeric(self._data[:,col], errors="coerce"))
+                self._medians[col] = np.nanmedian(np.unique(pd.to_numeric(self._data[:,col], errors="coerce")))
         
         self.r, self.c = np.shape(self._data)
 

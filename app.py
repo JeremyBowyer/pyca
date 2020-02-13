@@ -13,9 +13,6 @@ from styles import dark
 import pandas as pd
 import numpy as np
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasAgg
-from matplotlib.figure import Figure
-
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -25,10 +22,13 @@ from functools import partial
 
      
 class Pyca(QMainWindow):
-    PAGE_MASTER = [LoadingPage, SplashPage, SetupPage, TransformationPage, DataPreviewPage, MetricComparisonPage, MetricDivePage]
+    PAGE_MASTER = [LoadingPage, SplashPage, SetupPage, DataPreviewPage, TransformationPage, FilterPage, MetricComparisonPage, MetricDivePage]
     
     # FONTS #
     TOOLBAR_FONT = QFont("Raleway", 14)
+    SMALL_FONT = QFont("Raleway", 12)
+    NORMAL_FONT = QFont("Raleway", 16)
+    LARGE_FONT = QFont("Raleway", 24)
     NORMAL_BTN_FONT = QFont("Raleway", 14)
     LARGE_BTN_FONT = QFont("Raleway", 24)
     SETUP_WIDGET_FONT = QFont("Raleway", 12)
@@ -52,6 +52,9 @@ class Pyca(QMainWindow):
         self.is_loading = False
         self.start_data_worker()
         
+        self.all_cols = []
+        self.x_cols   = []
+
         # Build UI
         self.stack = QStackedWidget(self)
         self.setCentralWidget(self.stack)
@@ -69,7 +72,8 @@ class Pyca(QMainWindow):
     
     def home(self):
         self.showMaximized()
-        self.raise_page(SplashPage, force=True)
+        #self.raise_page(SplashPage, force=True)
+        self.raise_page(FilterPage, force=True)
     
     def build_status_bar(self):
         self.statusBar = QtWidgets.QStatusBar()
@@ -106,21 +110,27 @@ class Pyca(QMainWindow):
         
         setupAction = QAction(self)
         setupAction.setIcon(QIcon("icons/data-centre-white.png"))
-        setupAction.setIconText("Setup")
+        setupAction.setIconText("Run Analysis")
         setupAction.triggered.connect(partial(self.raise_page, SetupPage))
         setupAction.setFont(self.TOOLBAR_FONT)
+
+        dataPreviewAction = QAction(self)
+        dataPreviewAction.setIcon(QIcon("icons/data-table-white.png"))
+        dataPreviewAction.setIconText("Data Preview")
+        dataPreviewAction.triggered.connect(partial(self.raise_page, DataPreviewPage))
+        dataPreviewAction.setFont(self.TOOLBAR_FONT)
 
         transformationAction = QAction(self)
         transformationAction.setIcon(QIcon("icons/timeline-chart-white.png"))
         transformationAction.setIconText("Transformations")
         transformationAction.triggered.connect(partial(self.raise_page, TransformationPage))
         transformationAction.setFont(self.TOOLBAR_FONT)
-        
-        dataPreviewAction = QAction(self)
-        dataPreviewAction.setIcon(QIcon("icons/data-table-white.png"))
-        dataPreviewAction.setIconText("Data Preview")
-        dataPreviewAction.triggered.connect(partial(self.raise_page, DataPreviewPage))
-        dataPreviewAction.setFont(self.TOOLBAR_FONT)
+
+        filterAction = QAction(self)
+        filterAction.setIcon(QIcon("icons/filter.png"))
+        filterAction.setIconText("Filters")
+        filterAction.triggered.connect(partial(self.raise_page, FilterPage))
+        filterAction.setFont(self.TOOLBAR_FONT)
         
         metricComparisonAction = QAction(self)
         metricComparisonAction.setIcon(QIcon("icons/data-network-white.png"))
@@ -135,8 +145,9 @@ class Pyca(QMainWindow):
         metricDiveAction.setFont(self.TOOLBAR_FONT)
         
         self.toolBar.addAction(setupAction)
-        self.toolBar.addAction(transformationAction)
         self.toolBar.addAction(dataPreviewAction)
+        self.toolBar.addAction(transformationAction)
+        self.toolBar.addAction(filterAction)
         self.toolBar.addAction(metricComparisonAction)
         self.toolBar.addAction(metricDiveAction)
         
@@ -227,6 +238,12 @@ class Pyca(QMainWindow):
         self.dataWorker = DataWorker()
         self.dataWorker.update_cols_signal.connect(self.update_cols)
         self.dataWorker.loading_msg_signal.connect(self.update_loading_msg)
+        self.dataWorker.start_task_signal.connect(self.start_task)
+        self.dataWorker.start_status_task_signal.connect(self.start_status_task)
+        self.dataWorker.finish_status_task_signal.connect(self.finished_status_task)
+        self.dataWorker.show_error_signal.connect(self.show_error)
+        self.dataWorker.df_model_signal.connect(self.update_df_model)
+        self.dataWorker.df_loaded_signal.connect(self.df_loaded)
 
         # Create Thread
         self.dataThread = QThread(self)
@@ -235,6 +252,13 @@ class Pyca(QMainWindow):
         self.dataWorker.moveToThread(self.dataThread)
         self.dataThread.start()
     
+    def df_loaded(self):
+        self.pages[TransformationPage].remove_all_transformations()
+
+    @pyqtSlot(str)
+    def show_error(self, msg):
+        QMessageBox.about(self, "Warning", msg)
+
     @pyqtSlot(object)
     def load_df_model(self, dfmodel):
         self.pages[DataPreviewPage].buildModel(dfmodel)
@@ -247,12 +271,17 @@ class Pyca(QMainWindow):
         saveAction.triggered.connect(self.save_csv)
         self.fileMenu.insertAction(self.quitAction, saveAction)
         self.finished_task(SetupPage)
+
+    @pyqtSlot(object)
+    def update_df_model(self, dfmodel):
+        self.pages[DataPreviewPage].buildModel(dfmodel)
     
-    @pyqtSlot(list)
-    def update_cols(self, cols):
+    @pyqtSlot(list, list)
+    def update_cols(self, all_cols, x_cols):
+        self.all_cols = all_cols
+        self.x_cols   = x_cols
         for colList in self.columnLists:
-            colList.clear()
-            colList.addItems(cols)
+            colList.update_cols(all_cols, x_cols)
         
     @pyqtSlot(str)
     def update_loading_msg(self, msg):
