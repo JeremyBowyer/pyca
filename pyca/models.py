@@ -1,8 +1,47 @@
-from PyQt5 import QtCore
-from PyQt5 import QtGui
+from PyQt5 import QtCore, QtGui
 import pandas as pd
 import numpy as np
-from IPython import embed;
+import warnings
+
+
+class AccurateRowNumberProxy(QtCore.QSortFilterProxyModel):
+    # TODO: Check if sorting has been sped up (see: https://bugreports.qt.io/browse/QTBUG-45208)
+    # or use a different proxy model, or no proxy model at all.
+    def headerData(self, section, orientation, role):
+        # if display role of vertical headers
+        if orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
+            # return the actual row number
+            return section + 1
+        # for other cases, rely on the base implementation
+        return super(AccurateRowNumberProxy, self).headerData(section, orientation, role)
+
+
+class NumericSortProxyModel(AccurateRowNumberProxy):
+    def lessThan(self, left, right):
+        #USE CUSTOM SORTING LOGIC HERE
+        left_data  = left.data()
+        right_data = right.data()
+
+        try:
+            left_val  = float(left_data)
+            right_val = float(right_data)
+
+            if np.isnan(left_val):
+                return True
+
+            if np.isnan(right_val):
+                return False
+
+            return left_val < right_val
+
+        except ValueError:
+            pass
+
+        if isinstance(left_data, str) and isinstance(right_data, str):
+            return left_data.lower() < right_data.lower()
+
+        return left_data < right_data
+
 
 class NumpyModel(QtCore.QAbstractTableModel):
     def __init__(self, data, parent=None, format_cols={}):
@@ -16,8 +55,10 @@ class NumpyModel(QtCore.QAbstractTableModel):
         
         if self._data.size != 0:
             for col in self._format_cols.keys():
+                warnings.simplefilter("ignore")
                 self._maxs[col] = np.nanmax(pd.to_numeric(self._data[:,col], errors="coerce"))
                 self._mins[col] = np.nanmin(pd.to_numeric(self._data[:,col], errors="coerce"))
+                #warnings.simplefilter("default")
                 self._medians[col] = np.nanmedian(np.unique(pd.to_numeric(self._data[:,col], errors="coerce")))
         
         self.r, self.c = np.shape(self._data)
@@ -34,9 +75,13 @@ class NumpyModel(QtCore.QAbstractTableModel):
         except ValueError:
             flt = default
         return(flt)
-    
+
     def data(self, index, role=QtCore.Qt.DisplayRole):
         if index.isValid():
+
+            if role == QtCore.Qt.ToolTipRole:
+                return str(self._data[index.row(),index.column()])
+
             if role == QtCore.Qt.DisplayRole:
                 return self._data[index.row(),index.column()]
             
@@ -102,22 +147,33 @@ class NumpyModel(QtCore.QAbstractTableModel):
                         return QtCore.QVariant(QtGui.QBrush(QtGui.QColor(180,180,180)))
         return None
 
-    def sort(self, column, order):
-        self.layoutAboutToBeChanged.emit()
-        if order:
-            self._data = self._data[self._data[:,column].argsort()[::-1]]
-        else:
-            self._data = self._data[self._data[:,column].argsort()]
+    # def sort(self, column, order):
+    #     self.layoutAboutToBeChanged.emit()
+    #     if order:
+    #         self._data = self._data[self._data[:,column].argsort()[::-1]]
+    #     else:
+    #         self._data = self._data[self._data[:,column].argsort()]
 
-        self.layoutChanged.emit()
+    #     self.layoutChanged.emit()
 
     def headerData(self, p_int, orientation, role):
+        if role == QtCore.Qt.ToolTipRole:
+            try:
+                return self.get_cols()[p_int]
+            except IndexError:
+                return ""
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
                 return self._cols[p_int]
             elif orientation == QtCore.Qt.Vertical:
                 return p_int
         return None
+
+    def get_cols(self):
+        return self._cols
+
+    def get_df(self):
+        return pd.DataFrame(data=self._data, columns=self._cols)
 
 class PandasModel(QtCore.QAbstractTableModel): 
     def __init__(self, df = pd.DataFrame(), parent=None): 
@@ -175,3 +231,6 @@ class PandasModel(QtCore.QAbstractTableModel):
         self._df.sort_values(colname, ascending= order == QtCore.Qt.AscendingOrder, inplace=True)
         self._df.reset_index(inplace=True, drop=True)
         self.layoutChanged.emit()
+
+    def get_df(self):
+        return self._df

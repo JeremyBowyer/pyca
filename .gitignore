@@ -1,8 +1,12 @@
 /logs/
+/profiler/
 /__pycache__/
+/pyca/__pycache__/
 /.ipynb_checkpoints/
-/test_data/
+/.vscode/
 /env/
+/build/
+/misc/
 Untitled.ipynb
 run_app.bat
 run_app

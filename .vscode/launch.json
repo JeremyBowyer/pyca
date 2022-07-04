@@ -4,12 +4,17 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
-            "name": "Python: Current File (Integrated Terminal)",
+            "name": "Python: RUN APP (Integrated Terminal)",
             "type": "python",
+            "preLaunchTask": "update_cfg",
             "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
+            "program": "${workspaceFolder}/pyca/pyca.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "subProcess": true,
+            "stopOnEntry": false,
         },
         {
             "name": "Python: Remote Attach",
@@ -60,10 +65,10 @@
             "jinja": true
         },
         {
-            "name": "Python: Current File (External Terminal)",
+            "name": "Python: RUN APP (External Terminal)",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "${workspaceFolder}/app.py",
             "console": "externalTerminal"
         }
     ]
