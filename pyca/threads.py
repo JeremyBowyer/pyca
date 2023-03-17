@@ -58,6 +58,7 @@ class DataWorker(Worker):
     correlation_scatter_complete_signal = pyqtSignal(pd.DataFrame)
     correlation_histogram_complete_signal = pyqtSignal(list)
     y_col_change_signal = pyqtSignal(str)
+    filters_change_signal = pyqtSignal(list)
     loading_msg_signal = pyqtSignal(str)
     start_task_signal = pyqtSignal(str)
     start_status_task_signal = pyqtSignal(str)
@@ -997,7 +998,16 @@ class DataWorker(Worker):
 
             dp_list = self.date_dp_df.loc[self.date_dp_df["Metric"] == row["Metric"]].values.flatten().tolist()[1:]
 
-            cor_arr = np.array(cor_list) * np.array(dp_list)
+            # TODO: this whole thing sucks
+            cor_list_complete_cases = []
+            dp_list_complete_cases  = []
+            for pair in zip(cor_list, dp_list):
+                if np.isnan(pair[0]) or np.isnan(pair[1]):
+                    continue
+                cor_list_complete_cases.append(pair[0])
+                dp_list_complete_cases.append(pair[1])
+
+            cor_arr_complete_cases = np.array(cor_list_complete_cases) * np.array(dp_list_complete_cases)
 
             periods = sum([1 for el in cor_list if not np.isnan(el)])
             
@@ -1009,8 +1019,9 @@ class DataWorker(Worker):
             pos_periods  = sum([1 for el in cor_list if el > 0])
             perc_neg     = neg_periods / periods
             perc_pos     = pos_periods / periods
-            wgtd_avg_cor = np.nansum(cor_arr) / np.nansum(dp_list)
+            wgtd_avg_cor = np.nansum(cor_arr_complete_cases) / np.nansum(dp_list_complete_cases)
             avg_cor      = np.nanmean(cor_list)
+
 
             row["Total Periods"]            = periods
             row["Negative Periods"]         = neg_periods
@@ -1949,7 +1960,7 @@ class DataWorker(Worker):
         df = self.get_current_df(apply_filter=False, clean=False)
 
         self.filters[filter_] = filter_.create_filter(df)
-
+        self.filters_change_signal.emit(list(self.filters.keys()))
         self.update_data_preview_model()
         self.finish_status_task()
         self.filter_applied_signal.emit(filter_)
@@ -1963,6 +1974,7 @@ class DataWorker(Worker):
         """
 
         self.filters.pop(filter_, None)
+        self.filters_change_signal.emit(list(self.filters.keys()))
         self.update_data_preview_model()
 
     def remove_all_filters(self):
@@ -1973,6 +1985,7 @@ class DataWorker(Worker):
         """
 
         self.filters = {}
+        self.filters_change_signal.emit(list(self.filters.keys()))
 
     @pyqtSlot(dict)
     def aggregate_by_date(self, info):

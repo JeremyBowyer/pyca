@@ -106,10 +106,14 @@ class Filter(ABC):
 class ValueFilter(Filter):
     def __init__(self):
         super(ValueFilter).__init__()
-        self.name        = "Value Filter"
+        self.type_name   = "Value Filter"
         self.description = "Filter your dataset where values in given columns fall between a given maximum and minimum value."
+        self.label       = ""
+        self.name        = ""
 
     def add_widgets(self, layout, owner, controller):
+        filter_name_label = QLabel("Filter Name", owner)
+        self.filter_name_box = QLineEdit(owner)
         filter_col_label = QLabel("Column to filter on", owner)
         self.filter_col_box = widgets.ColumnComboBox(owner, controller)
         self.filter_col_box.setFixedWidth(450)
@@ -119,6 +123,8 @@ class ValueFilter(Filter):
         self.max_value_le = QLineEdit(owner)
         self.remove_matched_box = QCheckBox("REMOVE matched rows? (unchecking will KEEP matched rows")
 
+        layout.addWidget(filter_name_label)
+        layout.addWidget(self.filter_name_box)
         layout.addWidget(filter_col_label)
         layout.addWidget(self.filter_col_box)
         layout.addWidget(min_label)
@@ -129,7 +135,8 @@ class ValueFilter(Filter):
 
     def add_summary_widgets(self, box, controller):
         box.filter = self
-
+        box.filter_label.setText(self.type_name)
+        box.filer_name_label = QLabel(self.name, box)
         box.filter_col_label = QLabel("Column Filtered On:", box)
         box.filter_col_label.setFont(controller.NORMAL_FONT)
         box.filter_col = QLabel(self.filter_col, box)
@@ -151,6 +158,7 @@ class ValueFilter(Filter):
         box.filter_out_value = QLabel(str(self.remove_matched), box)
         box.filter_out_value.setFont(controller.SMALL_FONT)
 
+        box.content_layout.addWidget(box.filer_name_label)
         box.content_layout.addWidget(box.filter_col_label)
         box.content_layout.addWidget(box.filter_col)
         box.content_layout.addWidget(box.min_label)
@@ -164,6 +172,7 @@ class ValueFilter(Filter):
         box.setFixedWidth(500)
 
     def validate_inputs(self, owner):
+        self.name       = self.filter_name_box.text() if self.filter_name_box.text() != "" else self.name
         self.filter_col = self.filter_col_box.currentText()
 
         try:
@@ -201,20 +210,26 @@ class ValueFilter(Filter):
 class CompleteCasesFilter(Filter):
     def __init__(self):
         super(CompleteCasesFilter).__init__()
-        self.name        = "Complete Cases Filter"
+        self.type_name   = "Complete Cases Filter"
         self.description = "The main data set will be filtered based on rows where the given columns all have data."
+        self.label       = ""
+        self.name        = ""
 
     def add_widgets(self, layout, owner, controller):
+        filter_name_label = QLabel("Filter Name", owner)
+        self.filter_name_box = QLineEdit(owner)
         self.filter_cols_box = widgets.SearchableListView(owner, controller, title="Columns to check:", track_columns=True)
         self.remove_matched_box = QCheckBox("REMOVE matched rows? (unchecking will KEEP matched rows)")
 
+        layout.addWidget(filter_name_label)
+        layout.addWidget(self.filter_name_box)
         layout.addWidget(self.filter_cols_box)
         layout.addWidget(self.remove_matched_box)
 
     def add_summary_widgets(self, box, controller):
         box.filter = self
-        box.filter_label.setText(self.name)
-
+        box.filter_label.setText(self.type_name)
+        box.filer_name_label = QLabel(self.name, box)
         box.filter_cols_label = QLabel("Columns Filtered On:", box)
         box.filter_cols_label.setFont(controller.NORMAL_FONT)
         box.filter_cols = QListWidget(box)
@@ -225,6 +240,7 @@ class CompleteCasesFilter(Filter):
         box.filter_out_value = QLabel(str(self.remove_matched), box)
         box.filter_out_value.setFont(controller.SMALL_FONT)
 
+        box.content_layout.addWidget(box.filer_name_label)
         box.content_layout.addWidget(box.filter_cols_label)
         box.content_layout.addWidget(box.filter_cols)
         box.content_layout.addWidget(box.filter_out_label)
@@ -234,6 +250,7 @@ class CompleteCasesFilter(Filter):
         box.setFixedWidth(500)
 
     def validate_inputs(self, owner):
+        self.name           = self.filter_name_box.text() if self.filter_name_box.text() != "" else self.name
         self.filter_cols    = self.filter_cols_box.selectedItems()
         self.remove_matched = self.remove_matched_box.isChecked()
 
@@ -253,10 +270,14 @@ class CompleteCasesFilter(Filter):
 class PercentileFilter(Filter):
     def __init__(self):
         super(PercentileFilter).__init__()
-        self.name        = "Percentile Filter"
+        self.type_name   = "Percentile Filter"
         self.description = "The main data set will be filtered based on the given percentiles of the given column."
+        self.label       = ""
+        self.name        = ""
 
     def add_widgets(self, layout, owner, controller):
+        filter_name_label = QLabel("Filter Name", owner)
+        self.filter_name_box = QLineEdit(owner)
         filter_col_label = QLabel("Column to filter on", owner)
         self.filter_col_box = widgets.ColumnComboBox(owner, controller)
         perc_label = QLabel("Select quantile range (inclusive)", owner)
@@ -265,6 +286,8 @@ class PercentileFilter(Filter):
         self.category_col_box = widgets.ColumnComboBox(owner, controller)
         self.remove_matched_box = QCheckBox("REMOVE matched rows? (unchecking will KEEP matched rows)")
 
+        layout.addWidget(filter_name_label)
+        layout.addWidget(self.filter_name_box)
         layout.addWidget(filter_col_label)
         layout.addWidget(self.filter_col_box)
         layout.addWidget(perc_label)
@@ -275,8 +298,8 @@ class PercentileFilter(Filter):
 
     def add_summary_widgets(self, box, controller):
         box.filter = self
-        box.filter_label.setText(self.name)
-        
+        box.filter_label.setText(self.type_name)
+        box.filer_name_label = QLabel(self.name, box)
         box.filter_col_label = QLabel("Column Filtered On:", box)
         box.filter_col_label.setFont(controller.NORMAL_FONT)
         box.filter_col = QLabel(self.filter_col, box)
@@ -297,6 +320,7 @@ class PercentileFilter(Filter):
         box.filter_out_value = QLabel(str(self.remove_matched), box)
         box.filter_out_value.setFont(controller.SMALL_FONT)
 
+        box.content_layout.addWidget(box.box.filer_name_label)
         box.content_layout.addWidget(box.filter_col_label)
         box.content_layout.addWidget(box.filter_col)
         box.content_layout.addWidget(box.lower_perc_label)
@@ -310,6 +334,7 @@ class PercentileFilter(Filter):
         box.setFixedWidth(500)
 
     def validate_inputs(self, owner):
+        self.name           = self.filter_name_box.text() if self.filter_name_box.text() != "" else self.name
         self.filter_col     = self.filter_col_box.currentText()
         self.lower_perc     = self.perc_slider.getRange()[0]
         self.upper_perc     = self.perc_slider.getRange()[1]
@@ -360,16 +385,22 @@ class PercentileFilter(Filter):
 class StringFilter(Filter):
     def __init__(self):
         super(StringFilter).__init__()
-        self.name        = "String Filter"
+        self.type_name   = "String Filter"
         self.description = "Filter your dataset based on values in given columns matching a given string."
+        self.label       = ""
+        self.name        = ""
 
     def add_widgets(self, layout, owner, controller):
+        filter_name_label = QLabel("Filter Name", owner)
+        self.filter_name_box = QLineEdit(owner)
         self.filter_cols_box = widgets.SearchableListView(owner, controller, title="Columns to filter on:", track_columns=True)
         string_label = QLabel("String to match", owner)
         self.string_box = QLineEdit(owner)
         self.case_checkbox = QCheckBox("Case sensitive?")
         self.remove_matched_box = QCheckBox("REMOVE matched rows? (unchecking will KEEP matched rows)")
 
+        layout.addWidget(filter_name_label)
+        layout.addWidget(self.filter_name_box)
         layout.addWidget(self.filter_cols_box)
         layout.addWidget(string_label)
         layout.addWidget(self.string_box)
@@ -378,7 +409,9 @@ class StringFilter(Filter):
 
     def add_summary_widgets(self, box, controller):
         box.filter = self
-        box.filter_label.setText(self.name)
+        box.filter_label.setText(self.type_name)
+
+        box.filer_name_label = QLabel(self.name, box)
 
         box.filter_cols_label = QLabel("Columns Filtered On:", box)
         box.filter_cols_label.setFont(controller.NORMAL_FONT)
@@ -400,6 +433,7 @@ class StringFilter(Filter):
         box.filter_out_value = QLabel(str(self.remove_matched), box)
         box.filter_out_value.setFont(controller.SMALL_FONT)
 
+        box.content_layout.addWidget(box.filer_name_label)
         box.content_layout.addWidget(box.filter_cols_label)
         box.content_layout.addWidget(box.filter_cols)
         box.content_layout.addWidget(box.string_label)
@@ -413,6 +447,7 @@ class StringFilter(Filter):
         box.setFixedWidth(500)
 
     def validate_inputs(self, owner):
+        self.name              = self.filter_name_box.text() if self.filter_name_box.text() != "" else self.name
         self.filter_cols       = self.filter_cols_box.selectedItems()
         self.string            = self.string_box.text()
         self.case_sensitive    = self.case_checkbox.isChecked()
@@ -441,10 +476,14 @@ class StringFilter(Filter):
 class DateFilter(Filter):
     def __init__(self):
         super(DateFilter).__init__()
-        self.name        = "Date Filter"
+        self.type_name   = "Date Filter"
         self.description = "Filter your dataset based on dates in given columns within a given date range."
+        self.label       = ""
+        self.name        = ""
 
     def add_widgets(self, layout, owner, controller):
+        filter_name_label = QLabel("Filter Name", owner)
+        self.filter_name_box = QLineEdit(owner)
         self.filter_cols_box = widgets.SearchableListView(owner, controller, title="Columns to filter on:", track_columns=True)
 
         start_date_label = QLabel("Start Date (inclusive)", owner)
@@ -455,6 +494,8 @@ class DateFilter(Filter):
 
         self.remove_matched_box = QCheckBox("REMOVE matched rows? (unchecking will KEEP matched rows)")
 
+        layout.addWidget(filter_name_label)
+        layout.addWidget(self.filter_name_box)
         layout.addWidget(self.filter_cols_box)
         layout.addWidget(start_date_label)
         layout.addWidget(self.start_date_box)
@@ -464,7 +505,9 @@ class DateFilter(Filter):
 
     def add_summary_widgets(self, box, controller):
         box.filter = self
-        box.filter_label.setText(self.name)
+        box.filter_label.setText(self.type_name)
+
+        box.filer_name_label = QLabel(self.name, box)
 
         box.filter_cols_label = QLabel("Columns Filtered On:", box)
         box.filter_cols_label.setFont(controller.NORMAL_FONT)
@@ -486,6 +529,7 @@ class DateFilter(Filter):
         box.filter_out_value = QLabel(str(self.remove_matched), box)
         box.filter_out_value.setFont(controller.SMALL_FONT)
 
+        box.content_layout.addWidget(box.filer_name_label)
         box.content_layout.addWidget(box.filter_cols_label)
         box.content_layout.addWidget(box.filter_cols)
         box.content_layout.addWidget(box.start_date_label)
@@ -499,6 +543,7 @@ class DateFilter(Filter):
         box.setFixedWidth(500)
 
     def validate_inputs(self, owner):
+        self.name              = self.filter_name_box.text() if self.filter_name_box.text() != "" else self.name
         self.filter_cols       = self.filter_cols_box.selectedItems()
         self.start_date_str    = self.start_date_box.text()
         self.end_date_str      = self.end_date_box.text()

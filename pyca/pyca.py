@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from functools import partial
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QStackedWidget, QAction, QToolBar, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QAction, QToolBar, QFileDialog, QMessageBox
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import QSize, pyqtSignal, pyqtSlot, QThread, Qt
 
@@ -176,13 +176,46 @@ class Pyca(QMainWindow):
     def build_main_layout(self):
         self.main_view = QWidget(self)
         self.main_view_layout = QVBoxLayout()
+        self.main_view_layout_top = QHBoxLayout()
+        self.main_view_layout_top_left = QVBoxLayout()
+        self.main_view_layout_top_right = QVBoxLayout()
+        self.main_view_layout_top_right = QVBoxLayout()
+        self.main_view_layout_top_left.setAlignment(Qt.AlignLeft)
+        self.main_view_layout_top_right.setAlignment(Qt.AlignRight)
+        self.main_view_layout.addLayout(self.main_view_layout_top)
+        self.main_view_layout_top.addLayout(self.main_view_layout_top_left)
+        self.main_view_layout_top.addLayout(self.main_view_layout_top_right)
         self.main_view.setLayout(self.main_view_layout)
         self.setCentralWidget(self.main_view)
 
-        self.y_col_label = QLabel("")
-        self.y_col_label.setFont(self.NORMAL_FONT)
-        self.y_col_label.setWordWrap(True)
-        self.main_view_layout.addWidget(self.y_col_label)
+        # # TODO: Make make these work
+        # self.y_col_label = QLabel("test1")
+        # self.y_col_label.setFont(self.NORMAL_FONT)
+        # self.y_col_label.setWordWrap(True)
+        # self.main_view_layout_top_left.addWidget(self.y_col_label)
+
+        # self.filters_label = QLabel("test2")
+        # self.filters_label.setFont(self.NORMAL_FONT)
+        # self.filters_label.setWordWrap(True)
+        # self.main_view_layout_top_left.addWidget(self.filters_label)
+
+        # self.filename_label = QLabel("test3")
+        # self.filename_label.setFont(self.SMALL_FONT)
+        # self.filename_label.setWordWrap(True)
+        # self.main_view_layout_top_right.addWidget(self.filename_label)
+
+        # self.row_cnt_original_label = QLabel("test4")
+        # self.row_cnt_original_label.setFont(self.SMALL_FONT)
+        # self.row_cnt_original_label.setWordWrap(True)
+        # self.main_view_layout_top_right.addWidget(self.row_cnt_original_label)
+
+        # self.row_cnt_current_label = QLabel("test5")
+        # self.row_cnt_current_label.setFont(self.SMALL_FONT)
+        # self.row_cnt_current_label.setWordWrap(True)
+        # self.main_view_layout_top_right.addWidget(self.row_cnt_current_label)
+
+        # self.main_view_layout_top_left.addStretch()
+        # self.main_view_layout_top_right.addStretch()
 
     def build_stack(self):
         self.stack = QStackedWidget(self)
@@ -325,6 +358,21 @@ class Pyca(QMainWindow):
     def update_y_col(self, col):
         self.y_col_label.setText("Y Column: " + col)
 
+    def update_filters(self, filters):
+        if len(filters) == 0:
+            self.filters_label.setText("Filters: None")
+        else:
+            self.filters_label.setText("Filters: " + ", ".join(filter.name for filter in filters))
+
+    def update_filename(self, filename):
+        self.filename_label.setText(filename)
+
+    def update_row_cnt_original(self, row_cnt):
+        self.row_cnt_original_label.setText(f"Original row count: {str(row_cnt)}")
+
+    def update_row_cnt_current(self, row_cnt):
+        self.row_cnt_current_label.setText(f"Current row count: {str(row_cnt)}")
+
     def start_task(self, msg):
         self.pages[LoadingPage].loadingLabel.setText(msg)
         self.pages[LoadingPage].loadingMessage.setText("")
@@ -422,6 +470,7 @@ class Pyca(QMainWindow):
         self.dataWorker.data_loaded_signal.connect(self.data_loaded)
         self.dataWorker.metric_dive_report_signal.connect(self.reportWorker.generate_report)
         self.dataWorker.y_col_change_signal.connect(self.update_y_col)
+        self.dataWorker.filters_change_signal.connect(self.update_filters)
 
         # Report Worker Signals
         self.reportWorker.start_status_task_signal.connect(self.start_status_task)

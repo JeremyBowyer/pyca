@@ -218,7 +218,7 @@ class SetupPage(QWidget):
         self.parent.pages[MetricComparisonPage].build_by_date_cor_model(by_date_cor_model)
         self.parent.pages[MetricComparisonPage].build_by_category_cor_model(by_category_cor_model)
         self.parent.pages[MetricComparisonPage].build_by_date_dp_model(by_date_dp_model)
-        self.parent.pages[MetricComparisonPage].build_by_date_dp_model(by_category_dp_model)
+        self.parent.pages[MetricComparisonPage].build_by_category_dp_model(by_category_dp_model)
 
     @pyqtSlot()
     def analysis_complete(self):
